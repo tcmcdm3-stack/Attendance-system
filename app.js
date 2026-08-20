@@ -1,5 +1,5 @@
 /* ================= CONFIG ================= */
-const API_URL = "PASTE_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+const API_URL = "https://script.google.com/macros/s/AKfycbwqC4xvNKNqRpfhz6Gr00gRzc2UvgeV3xvlZWbeZtNVh9MaFoCJ6wR0BAIyy8Ndrx_Pkg/exec";
 
 /* ================= API CLIENT =================
  * Replaces google.script.run. Uses POST with a text/plain body so the
