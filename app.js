@@ -1,5 +1,5 @@
 /* ================= CONFIG ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbzH2fYkUJ1oHSyLfviGuIjOaVqgSDIHbMCK3SkdgltbvEDj35nH98K6dR00P63MjpJs/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwQvkzZYL6amj9FYJA26JnIwN1OetfovSncRPKCopzKyaZfXIXA2yo3oycsKETD1s9G1A/exec";
 
 /* ================= API CLIENT =================
  * Replaces google.script.run. Uses POST with a text/plain body so the
