@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="auth">
+  <div class="auth-left">
+    <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+    <div class="particles">
+      <span class="particle" style="left:8%;animation-duration:9s;animation-delay:0s"></span>
+      <span class="particle" style="left:22%;animation-duration:11s;animation-delay:1.5s"></span>
+      <span class="particle" style="left:38%;animation-duration:8s;animation-delay:3s"></span>
+      <span class="particle" style="left:55%;animation-duration:12s;animation-delay:.5s"></span>
+      <span class="particle" style="left:70%;animation-duration:10s;animation-delay:2.5s"></span>
+      <span class="particle" style="left:85%;animation-duration:9.5s;animation-delay:4s"></span>
+      <span class="particle" style="left:94%;animation-duration:11.5s;animation-delay:1s"></span>
+    </div>
+    <div class="hero">
+      <div class="ring"><div class="core">AMS</div></div>
+      <h1 class="shine">Attendance Management System</h1>
+      <p>Track worker training, verify attendance date-wise and sign off final checks - all from one clean dashboard.</p>
+      <div class="mock">
+        <div class="mock-head"><span></span><span></span><span></span></div>
+        <div class="mrow" style="--i:0"><div class="bar w1"></div><div class="bar w2"></div><div class="mcheck"></div></div>
+        <div class="mrow" style="--i:1"><div class="bar w1"></div><div class="bar w2"></div><div class="mcheck"></div></div>
+        <div class="mrow" style="--i:2"><div class="bar w1"></div><div class="bar w2"></div><div class="mcheck"></div></div>
+      </div>
+      <div class="fbadge b1">&#10003; Final Check</div>
+      <div class="fbadge b2">Training 1&#8211;5</div>
+      <div class="fbadge b3">Category &#183; Trade</div>
+    </div>
+  </div>
+  <div class="auth-right"><div class="card">
+    <div class="tabs">
+      <button id="tIn" class="on" onclick="tab('in')">Sign In</button>
+      <button id="tUp" onclick="tab('up')">Sign Up</button>
+    </div>
+    <div id="upFields"><label>Full Name (admin)</label><input id="sName" placeholder="e.g. Priya Sharma">
+      <label>Invite Code <span style="font-weight:400;color:var(--faint)">(leave blank only for the very first admin)</span></label><input id="sInvite" placeholder="e.g. A1B2C3D4"></div>
+    <label>Username</label><input id="sUser" placeholder="e.g. priya.s">
+    <label>Password</label><input id="sPass" type="password" placeholder="********">
+    <button class="btn" onclick="go()">Continue</button>
+    <div class="msg" id="aMsg"></div>
+  </div></div>
+</div>
+
+<div id="busy"></div>
+
+<div id="grid" style="display:none">
+  <div id="top">
+    <div class="brandwrap"><div class="mini">AMS</div><span class="brandname">Attendance Management System</span></div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span class="who"><span class="av" id="av"></span>Signed in as <span class="veil" id="who"></span></span>
+      <button onclick="openInvite()" title="Generate a one-time code so another admin can sign up">+ Admin</button>
+      <button onclick="out()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="panel" id="dashPanel">
+    <h2>Overview</h2>
+    <div class="dash" id="dashStats"></div>
+    <div class="dash-groups" id="dashGroups"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Add Worker &amp; Assign Training</h2>
+    <div id="form">
+      <div class="fld"><label>Aadhar Number</label><input id="fAadhar" inputmode="numeric" placeholder="1234 5678 9012"></div>
+      <div class="fld"><label>Name</label><input id="fName" placeholder="Full name"></div>
+      <div class="fld"><label>Category</label><select id="fCategory" onchange="fillTrades()"></select></div>
+      <div class="fld"><label>Trade</label>
+        <div class="fld row"><select id="fTrade"></select><button class="iconbtn" title="Add trade" onclick="openTrade()">+</button></div>
+      </div>
+      <div class="fld" style="max-width:170px"><label>Assessment Date</label><input id="fAssess" type="date"></div>
+      <div class="fld" style="flex:0"><button class="btn small" onclick="add()">Add Row</button></div>
+    </div>
+    <div class="msg" id="fMsg"></div>
+  </div>
+
+  <div id="searchbar">
+    <input type="text" id="qSearch" placeholder="Search Employee Code, Name, Aadhar, Category or Trade...">
+    <select id="qCategory"><option value="">All Categories</option></select>
+    <select id="qTrade"><option value="">All Trades</option></select>
+    <select id="qTrain">
+      <option value="">Training: All</option>
+      <option value="none">Not Started</option>
+      <option value="partial">In Progress</option>
+      <option value="full">Completed</option>
+    </select>
+    <select id="qFinalF">
+      <option value="">Final Check: All</option>
+      <option value="pending">Pending</option>
+      <option value="done">Completed</option>
+    </select>
+    <button class="btn small ghost" onclick="document.getElementById('bulkFileInput').click()">Import Excel/CSV</button>
+    <button class="linkbtn" onclick="openDeleted()">View deleted</button>
+    <button class="btn small ghost" onclick="exportCSV()">Download Excel (CSV)</button>
+    <button class="btn small ghost" onclick="printTable()">Print / Save as PDF</button>
+  </div>
+  <div class="wrap">
+    <div class="scroller"><table id="tbl"></table></div>
+    <div class="tfoot"><span id="counts"></span><span>Green row = training completed</span></div>
+  </div>
+</div>
+
+<input type="file" id="bulkFileInput" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="handleBulkUpload(this)">
+
+<div class="overlay" id="ov"><div class="modal" id="ovBody"></div></div>
+<div class="overlay" id="cov"><div class="modal">
+  <h3>Are you sure?</h3><div class="sub" id="cMsg"></div>
+  <button class="btn" style="background:var(--danger);box-shadow:none" onclick="doConfirm()">Yes, continue</button>
+  <button class="btn ghost" onclick="closeConfirm()">Cancel</button>
+</div></div>
+<div id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
