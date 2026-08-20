@@ -1,5 +1,5 @@
 /* ================= CONFIG ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbyEvR_7Oi4GqMvCc1dePhyTUbdzidGIds4skQSKIFaFF_zay7delUlmm3H7ktT7qYNe1Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz-HJxoiwYZAZ37bZyNa2LvwZOrUKiiykebF-_n9SzHIoIRgGc9fK_ZCIlxiSlB0LIDFA/exec";
 
 /* ================= API CLIENT =================
  * Replaces google.script.run. Uses POST with a text/plain body so the
@@ -268,6 +268,14 @@ function cell(hname, val, r, trs){
   if(trs.indexOf(hname)!==-1){
     if(val) return "<td data-col='"+hname+"' class='editable dateval' onclick='editDate("+r.rn+",&quot;"+hname+"&quot;,&quot;"+val+"&quot;)'>"+fmtDate(val)+"<span class='clear-x' onclick='event.stopPropagation();clearCell("+r.rn+",&quot;"+hname+"&quot;)'>&times;</span></td>";
     return "<td data-col='"+hname+"' class='editable' onclick='editDate("+r.rn+",&quot;"+hname+"&quot;,&quot;&quot;)'>+ date</td>";
+  }
+  if(hname==="Training Dates"){
+    var dots=trs.map(function(t,i){
+      var v=r[t], on=!!v;
+      var title=t+(on?(": "+fmtDate(v)):": not set");
+      return "<span class='tdot"+(on?" on":"")+"' title='"+esc(title)+"' onclick='editDate("+r.rn+",&quot;"+esc(t)+"&quot;,&quot;"+esc(v||"")+"&quot;)'>"+(i+1)+"</span>";
+    }).join("");
+    return "<td data-col='Training Dates' class='tdots'>"+dots+"</td>";
   }
   if(hname==="Final Check"){ var c=isComplete(r["Final Check"]); return "<td data-col='Final Check'><span class='check "+(c?"on":"")+"' onclick='toggleFinal("+r.rn+")'></span></td>"; }
   return "<td data-col='"+hname+"'>"+esc(val||"")+"</td>";
