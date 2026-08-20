@@ -1,5 +1,5 @@
 /* ================= CONFIG ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbzNVR8XzdJGhy95PA2UKgjPK1uUfhOsJ5VuPm8E7_xK5ZetAJT1x5jTZmjY6mylOhaXLg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyEvR_7Oi4GqMvCc1dePhyTUbdzidGIds4skQSKIFaFF_zay7delUlmm3H7ktT7qYNe1Q/exec";
 
 /* ================= API CLIENT =================
  * Replaces google.script.run. Uses POST with a text/plain body so the
@@ -17,6 +17,7 @@ function callApi(action, payload){
 var TOKEN = localStorage.getItem("ams_token") || "";
 var LUSER = localStorage.getItem("ams_user") || "";
 var MODE = "in", G = null, CONFIRM_CB = null, ERR_SHOWN = false;
+var SELECTED = {};
 var SORT_COL = null, SORT_DIR = "asc";
 var TCLASS = ["d0","d1","d2","d3"];
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -216,7 +217,7 @@ function submitTrade(){
 
 /* ================= TABLE RENDER ================= */
 function buildThead(headers, trainings){
-  var row="<tr>";
+  var row="<tr><th class='selcol'><input type='checkbox' id='selAll' onchange='toggleSelectAll(this.checked)'></th>";
   headers.forEach(function(h){
     var label=(h==="Approved By")?"Verified By":esc(h);
     if(h==="Training Dates"){ row+="<th>"+label+"</th>"; return; }
@@ -249,7 +250,7 @@ function emptyRow(cols){
     "</div></td></tr>";
 }
 function renderSkeleton(){
-  el("tbl").innerHTML=buildThead(buildVisibleHeaders(DEF_HEADERS,DEF_TRAININGS),DEF_TRAININGS)+"<tbody>"+emptyRow(DEF_HEADERS.length+1)+"</tbody>";
+  el("tbl").innerHTML=buildThead(buildVisibleHeaders(DEF_HEADERS,DEF_TRAININGS),DEF_TRAININGS)+"<tbody>"+emptyRow(DEF_HEADERS.length+2)+"</tbody>";
   el("counts").textContent="0 workers  ·  0 completed";
 }
 
@@ -292,20 +293,69 @@ function render(g){
   var trs=g.trainings||[];
   var rows=sortRows(applyFilters(g.rows||[], trs));
   var html=buildThead(headers,trs)+"<tbody>";
-  if(!rows.length){ html+=emptyRow(headers.length+1); }
+  if(!rows.length){ html+=emptyRow(headers.length+2); }
   else{
     rows.forEach(function(r){
       try{
         var complete=isComplete(r["Final Check"]);
         var cells="";
         for(var j=0;j<headers.length;j++){ cells+=cell(headers[j], r[headers[j]], r, trs); }
-        html+="<tr data-rn='"+r.rn+"' class='"+(complete?"done":"")+"'>"+cells+actionsCell(r,trs)+"</tr>";
+        var checked=SELECTED[r.rn]?" checked":"";
+        var selTd="<td class='selcol'><input type='checkbox'"+checked+" onchange='toggleRowSelect("+r.rn+",this.checked)'></td>";
+        html+="<tr data-rn='"+r.rn+"' class='"+(complete?"done":"")+(SELECTED[r.rn]?" selected":"")+"'>"+selTd+cells+actionsCell(r,trs)+"</tr>";
       }catch(e){ html+="<tr><td colspan='"+(headers.length+1)+"' style='color:#dc2626'>Row error: "+e.message+"</td></tr>"; }
     });
   }
   html+="</tbody>";
   el("tbl").innerHTML=html;
+  var liveRn={}; rows.forEach(function(r){ liveRn[r.rn]=true; });
+  Object.keys(SELECTED).forEach(function(rn){ if(!liveRn[rn]) delete SELECTED[rn]; });
   updateCounts();
+  updateSelBar();
+}
+function toggleRowSelect(rn, checked){
+  if(checked) SELECTED[rn]=true; else delete SELECTED[rn];
+  var tr=el("tbl").querySelector("tr[data-rn='"+rn+"']");
+  if(tr) tr.classList.toggle("selected", !!checked);
+  var selAll=el("selAll");
+  if(selAll){ var boxes=el("tbl").querySelectorAll("tbody input[type=checkbox]"); selAll.checked = boxes.length>0 && Array.prototype.every.call(boxes,function(b){return b.checked;}); }
+  updateSelBar();
+}
+function toggleSelectAll(checked){
+  SELECTED={};
+  if(checked && G && G.rows){ sortRows(applyFilters(G.rows,(G.trainings||[]))).forEach(function(r){ SELECTED[r.rn]=true; }); }
+  render(G);
+}
+function selCount(){ return Object.keys(SELECTED).length; }
+function updateSelBar(){
+  var bar=el("selBar"); if(!bar) return;
+  var n=selCount();
+  if(n>0){ bar.style.display="flex"; el("selCountTxt").textContent=n+" selected"; }
+  else{ bar.style.display="none"; }
+}
+function clearSelection(){ SELECTED={}; render(G); }
+function bulkDelete(){
+  var rns=Object.keys(SELECTED).map(Number);
+  if(!rns.length) return;
+  askConfirm("Delete "+rns.length+" selected employee record"+(rns.length===1?"":"s")+"?", function(){
+    if(!G||!G.rows) return;
+    var removed=[];
+    rns.forEach(function(rn){
+      var idx=-1; for(var i=0;i<G.rows.length;i++){ if(G.rows[i].rn===rn) idx=i; }
+      if(idx>=0){ removed.push([idx,G.rows[idx]]); }
+    });
+    G.rows=G.rows.filter(function(r){ return rns.indexOf(r.rn)===-1; });
+    SELECTED={}; render(G); /* instant */
+    callApi("bulkDeleteRows",[TOKEN,rns]).then(function(res){
+      if(res && !res.ok){
+        removed.sort(function(a,b){return a[0]-b[0];}).forEach(function(pair){ G.rows.splice(pair[0],0,pair[1]); });
+        render(G); toast(res.msg,"err");
+      } else toast(rns.length+" record"+(rns.length===1?"":"s")+" deleted","ok");
+    }).catch(function(e){
+      removed.sort(function(a,b){return a[0]-b[0];}).forEach(function(pair){ G.rows.splice(pair[0],0,pair[1]); });
+      render(G); fail(e);
+    });
+  });
 }
 function updateCounts(){
   if(!G || !G.rows){ return; }
