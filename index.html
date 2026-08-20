@@ -103,6 +103,11 @@
     <button class="btn small ghost" onclick="exportCSV()">Download Excel (CSV)</button>
     <button class="btn small ghost" onclick="printTable()">Print / Save as PDF</button>
   </div>
+  <div id="selBar" style="display:none">
+    <span id="selCountTxt">0 selected</span>
+    <button class="btn small" style="background:var(--danger);box-shadow:none" onclick="bulkDelete()">Delete Selected</button>
+    <button class="linkbtn" onclick="clearSelection()">Clear selection</button>
+  </div>
   <div class="wrap">
     <div class="scroller"><table id="tbl"></table></div>
     <div class="tfoot"><span id="counts"></span><span>Green row = training completed</span></div>
