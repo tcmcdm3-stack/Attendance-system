@@ -54,7 +54,7 @@ h1.shine{font-size:34px;font-weight:800;letter-spacing:-.6px;margin:0 0 12px;
 .w1{width:74px}.w2{flex:1}
 .mcheck{width:18px;height:18px;flex:none;border-radius:5px;border:2px solid rgba(255,255,255,.4);position:relative;
   animation:checkon 7s infinite;animation-delay:calc(var(--i)*1.5s)}
-.mcheck:after{content:"\\2713";position:absolute;left:2px;top:0;font:800 11px 'Inter';color:#065f46;opacity:0;
+.mcheck:after{content:"\2713";position:absolute;left:2px;top:0;font:800 11px 'Inter';color:#065f46;opacity:0;
   animation:checktick 7s infinite;animation-delay:calc(var(--i)*1.5s)}
 @keyframes rowgreen{0%,12%{background:rgba(255,255,255,.06)}20%,78%{background:rgba(74,222,128,.25)}88%,100%{background:rgba(255,255,255,.06)}}
 @keyframes checkon{0%,12%{background:transparent;border-color:rgba(255,255,255,.4)}16%{transform:scale(1.25)}20%,78%{background:#4ade80;border-color:#4ade80;transform:scale(1)}84%,100%{background:transparent;border-color:rgba(255,255,255,.4)}}
@@ -167,7 +167,13 @@ td.editable:hover .clear-x{opacity:1;color:var(--danger)}
 .check{width:20px;height:20px;border-radius:6px;border:2px solid #cbd5e1;background:#fff;display:inline-block;cursor:pointer;transition:.18s;vertical-align:middle;position:relative}
 .check:hover{border-color:var(--success);transform:scale(1.15)}
 .check.on{background:var(--success);border-color:var(--success)}
-.check.on:after{content:"\\2713";color:#fff;font:800 12px 'Inter';position:absolute;left:3px;top:1px;animation:pop .2s ease}
+.check.on:after{content:"\2713";color:#fff;font:800 12px 'Inter';position:absolute;left:3px;top:1px;animation:pop .2s ease}
+.selcol{width:34px;padding-left:14px!important;padding-right:0!important}
+.selcol input[type=checkbox]{width:16px;height:16px;cursor:pointer;vertical-align:middle}
+tbody tr.selected td{background:#eaf2ff}
+#selBar{display:flex;align-items:center;gap:14px;margin:0 28px -10px;padding:10px 16px;background:#fff5f5;
+  border:1px solid var(--danger-soft);border-radius:10px;font-size:13px;font-weight:600;color:var(--danger)}
+#selBar .btn{padding:6px 14px;font-size:12px}
 .pill{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700}
 .pill.ready{background:#fff7e6;color:#92660b}
 .pill.wait{background:#f1f5f9;color:var(--faint)}
@@ -190,12 +196,12 @@ button.del:hover{background:var(--danger);color:#fff;transform:translateY(-1px);
 .toast{background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font:600 12.5px 'Inter';box-shadow:0 10px 26px rgba(15,23,42,.35);animation:toastIn .25s ease;transition:.3s;display:flex;gap:8px;align-items:center;max-width:340px}
 .toast-action{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 10px;font:700 11px 'Inter';cursor:pointer;flex:none;transition:.15s}
 .toast-action:hover{background:#fff;color:var(--ink)}
-.toast.ok:before{content:"\\2713";color:#4ade80;font-weight:800}
+.toast.ok:before{content:"\2713";color:#4ade80;font-weight:800}
 .toast.err{background:var(--danger)}
 .toast.bye{opacity:0;transform:translateX(24px)}
 @media(max-width:900px){#auth{flex-direction:column}.auth-left{padding:36px}.fbadge{display:none}.panel,.wrap{margin-left:14px;margin-right:14px}}
 @media print{
-  #auth,#top,.panel,#searchbar,.overlay,#toasts,#busy,button.del,.check,.clear-x{display:none!important}
+  #auth,#top,.panel,#searchbar,.overlay,#toasts,#busy,button.del,.check,.clear-x,#selBar,.selcol{display:none!important}
   body{background:#fff}
   .wrap{margin:0;border:0;box-shadow:none}
   .scroller{overflow:visible}
