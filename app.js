@@ -18,6 +18,7 @@ var TOKEN = localStorage.getItem("ams_token") || "";
 var LUSER = localStorage.getItem("ams_user") || "";
 var MODE = "in", G = null, CONFIRM_CB = null, ERR_SHOWN = false;
 var SELECTED = {};
+var PENDING = {}; // key "rn|col" -> value, kept while a setCell/toggleFinal request is in flight
 var SORT_COL = null, SORT_DIR = "asc";
 var TCLASS = ["d0","d1","d2","d3"];
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -155,7 +156,7 @@ function tab(m){ MODE=m;
 function go(){
   var u=el("sUser").value,p=el("sPass").value;
   if(MODE==="up"){
-    callApi("signUp",[el("sName").value,u,p,el("sInvite").value]).then(function(r){
+    callApi("signUp",[el("sName").value,u,p]).then(function(r){
       show("aMsg",r.msg); if(r.ok){ tab("in"); toast("Account created - sign in","ok"); }
     }).catch(fail);
   } else {
@@ -186,7 +187,17 @@ function out(){
   resetToLogin();
   toast("Signed out","ok");
 }
-function load(){ callApi("loadGrid",[TOKEN]).then(render).catch(fail); }
+function load(){ callApi("loadGrid",[TOKEN]).then(function(g){ applyPending(g); render(g); }).catch(fail); }
+/* A full reload can be slower than an edit that started after it - never let a slow
+   reload's response overwrite an edit that's still in flight (or just landed). */
+function applyPending(g){
+  if(!g || !g.rows) return;
+  var byRn={}; g.rows.forEach(function(r){ byRn[r.rn]=r; });
+  Object.keys(PENDING).forEach(function(key){
+    var i=key.indexOf("|"); var rn=Number(key.slice(0,i)), col=key.slice(i+1);
+    var r=byRn[rn]; if(r) r[col]=PENDING[key];
+  });
+}
 
 /* ================= CATEGORY / TRADE DROPDOWNS ================= */
 function fillCategories(){
@@ -399,11 +410,16 @@ function clearCell(rn,col){
 }
 function editLocal(rn,col,newVal){
   var r=rowObj(rn); if(!r) return;
-  var old=r[col];
+  var old=r[col], key=rn+"|"+col;
+  PENDING[key]=newVal;
   r[col]=newVal; closeModal(); render(G); /* instant */
   callApi("setCell",[TOKEN,rn,col,newVal]).then(function(res){
+    if(PENDING[key]===newVal) delete PENDING[key];
     if(res && !res.ok){ r[col]=old; render(G); toast(res.msg,"err"); }
-  }).catch(function(e){ r[col]=old; render(G); fail(e); });
+  }).catch(function(e){
+    if(PENDING[key]===newVal) delete PENDING[key];
+    r[col]=old; render(G); fail(e);
+  });
 }
 function submitDate(rn,col){ editLocal(rn,col,el("mVal").value); }
 function submitText(rn,col){
@@ -455,12 +471,19 @@ function closeConfirm(){ el("cov").className="overlay"; CONFIRM_CB=null; }
 function add(){
   var data={ aadhar:el("fAadhar").value, name:el("fName").value, category:el("fCategory").value,
              trade:el("fTrade").value, assess:el("fAssess").value };
+  var btn=document.querySelector("#form button.btn");
+  if(btn){ if(btn.disabled) return; btn.disabled=true; btn.textContent="Adding..."; }
   busyOn();
   callApi("addRow",[TOKEN,data]).then(function(r){
     busyOff();
-    if(r.ok){ show("fMsg",""); el("fAadhar").value=""; el("fName").value=""; el("fAssess").value=""; load(); toast("Worker added","ok"); }
-    else show("fMsg",r.msg);
-  }).catch(function(e){ busyOff(); fail(e); });
+    if(btn){ btn.disabled=false; btn.textContent="Add Row"; }
+    if(r.ok){
+      show("fMsg","");
+      el("fAadhar").value=""; el("fName").value=""; el("fAssess").value="";
+      if(r.row && G && G.rows){ G.rows.push(r.row); render(G); } else { load(); } // instant if backend returned the row, else fall back to a reload
+      toast("Worker added","ok");
+    } else show("fMsg",r.msg);
+  }).catch(function(e){ busyOff(); if(btn){ btn.disabled=false; btn.textContent="Add Row"; } fail(e); });
 }
 
 /* ================= DELETED EMPLOYEES ================= */
@@ -482,17 +505,6 @@ function openDeleted(){
 function restoreEmployee(rn){
   callApi("restoreRow",[TOKEN,rn]).then(function(res){
     if(res.ok){ toast("Restored","ok"); closeModal(); load(); } else toast(res.msg,"err");
-  }).catch(fail);
-}
-
-/* ================= INVITE ADMIN ================= */
-function openInvite(){
-  callApi("generateInviteCode",[TOKEN]).then(function(res){
-    if(!res.ok){ toast(res.msg,"err"); return; }
-    el("ovBody").innerHTML="<h3>Invite Code</h3><div class='sub'>Valid 24 hours, single use. Share it with the new admin.</div>"+
-      "<input readonly value='"+esc(res.code)+"' style='font-weight:800;letter-spacing:2px;text-align:center'>"+
-      "<button class='btn ghost' onclick='closeModal()'>Close</button>";
-    el("ov").className="overlay on";
   }).catch(fail);
 }
 
