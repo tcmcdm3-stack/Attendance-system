@@ -41,8 +41,7 @@
       <button id="tIn" class="on" onclick="tab('in')">Sign In</button>
       <button id="tUp" onclick="tab('up')">Sign Up</button>
     </div>
-    <div id="upFields"><label>Full Name (admin)</label><input id="sName" placeholder="e.g. Priya Sharma">
-      <label>Invite Code <span style="font-weight:400;color:var(--faint)">(leave blank only for the very first admin)</span></label><input id="sInvite" placeholder="e.g. A1B2C3D4"></div>
+    <div id="upFields"><label>Full Name (admin)</label><input id="sName" placeholder="e.g. Priya Sharma"></div>
     <label>Username</label><input id="sUser" placeholder="e.g. priya.s">
     <label>Password</label><input id="sPass" type="password" placeholder="********">
     <button class="btn" onclick="go()">Continue</button>
@@ -57,7 +56,6 @@
     <div class="brandwrap"><div class="mini">AMS</div><span class="brandname">Attendance Management System</span></div>
     <div style="display:flex;align-items:center;gap:16px">
       <span class="who"><span class="av" id="av"></span>Signed in as <span class="veil" id="who"></span></span>
-      <button onclick="openInvite()" title="Generate a one-time code so another admin can sign up">+ Admin</button>
       <button onclick="out()">Sign out</button>
     </div>
   </div>
