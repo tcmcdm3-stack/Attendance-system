@@ -181,20 +181,18 @@ function go(){
       show("aMsg",r.msg); if(r.ok){ tab("in"); toast("Account created - sign in","ok"); }
     }).catch(fail);
   } else {
-    callApi("signIn",[u,p]).then(function(r){
+    callApi("signInAndLoad",[u,p]).then(function(r){
       if(r.ok){ TOKEN=r.token; LUSER=r.username||u;
-        localStorage.setItem("ams_token",TOKEN); localStorage.setItem("ams_user",LUSER); enter(); }
+        localStorage.setItem("ams_token",TOKEN); localStorage.setItem("ams_user",LUSER); enter(r.grid); }
       else show("aMsg",r.msg);
     }).catch(fail);
   }
 }
-function enter(){
+function enter(preloadedGrid){
   el("auth").style.display="none"; el("grid").style.display="block";
   show("who", LUSER); el("av").textContent=(LUSER||"?").charAt(0).toUpperCase();
   fillCategories(); fillTrades();
-  renderSkeleton();
-  load();
-  callApi("healthCheck",[]).then(function(h){ if(h && !h.ok){ toast(h.error,"err"); } });
+  if(preloadedGrid){ applyPending(preloadedGrid); render(preloadedGrid); } else { renderSkeleton(); load(); }
 }
 function resetToLogin(){
   TOKEN=""; LUSER=""; G=null; ERR_SHOWN=false;
