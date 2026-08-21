@@ -1,16 +1,37 @@
 /* ================= CONFIG ================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbyXzTt4BU-8g3HHy1W3gM5-elJ0SbWh00duRgvif5_qoB2RpUntyEsRpbjHUVFCq7PLVA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz-HJxoiwYZAZ37bZyNa2LvwZOrUKiiykebF-_n9SzHIoIRgGc9fK_ZCIlxiSlB0LIDFA/exec";
 
 /* ================= API CLIENT =================
  * Replaces google.script.run. Uses POST with a text/plain body so the
  * browser treats it as a "simple request" and skips the CORS preflight
- * that Apps Script web apps don't handle. */
-function callApi(action, payload){
+ * that Apps Script web apps don't handle.
+ * Apps Script occasionally returns an HTML error page instead of JSON
+ * (cold start / transient Google-side hiccup) - retry silently before
+ * surfacing anything to the user. */
+function callApi(action, payload, attempt){
+  attempt = attempt || 0;
   return fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action: action, payload: payload || [] })
-  }).then(function(r){ return r.json(); });
+  }).then(function(r){
+    return r.text().then(function(text){
+      var data;
+      try{ data = JSON.parse(text); }
+      catch(e){
+        if(attempt < 2) return retryApi(action, payload, attempt);
+        throw new Error("Server is temporarily unavailable. Please try again.");
+      }
+      return data;
+    });
+  }).catch(function(err){
+    if(err instanceof TypeError && attempt < 2) return retryApi(action, payload, attempt); // network-level failure
+    throw err;
+  });
+}
+function retryApi(action, payload, attempt){
+  return new Promise(function(resolve){ setTimeout(resolve, 500 * (attempt + 1)); })
+    .then(function(){ return callApi(action, payload, attempt + 1); });
 }
 
 /* ================= STATE ================= */
@@ -488,15 +509,16 @@ function add(){
 
 /* ================= DELETED EMPLOYEES ================= */
 function openDeleted(){
-  el("ovBody").innerHTML="<h3>Deleted Employees</h3><div class='sub' id='delList'>Loading...</div>"+
-    "<button class='btn ghost' onclick='closeModal()'>Close</button>";
+  el("ovBody").innerHTML=
+    "<div class='modal-head'><h3 style='margin:0'>Deleted Employees</h3><span class='modal-x' onclick='closeModal()'>&times;</span></div>"+
+    "<div class='sub' id='delList'>Loading...</div>";
   el("ov").className="overlay on";
   callApi("listDeleted",[TOKEN]).then(function(res){
     var box=el("delList"); if(!box) return;
     if(!res.ok){ box.textContent=res.msg; return; }
     if(!res.rows.length){ box.textContent="No deleted employees."; return; }
     box.innerHTML=res.rows.map(function(r){
-      return "<div style='display:flex;justify-content:space-between;align-items:center;padding:6px 0'>"+
+      return "<div style='display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)'>"+
         "<span><b>"+esc(r.code)+"</b> - "+esc(r.name)+"</span>"+
         "<button class='btn small' onclick='restoreEmployee("+r.rn+")'>Restore</button></div>";
     }).join("");
